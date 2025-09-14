@@ -23,6 +23,41 @@ resource "hcloud_ssh_key" "main-27042025" {
   public_key = file("~/.ssh/main-27042025.pub")
 }
 
+# https://cloudinit.readthedocs.io/en/latest/reference/examples_library.html
+data "template_cloudinit_config" "cloudinit" {
+  gzip          = true
+  base64_encode = true
+  part {
+    content_type = "text/cloud-config"
+    content = yamlencode({
+      runcmd = [
+        # when setting localezone journalctl -u shows the correct time but
+        # looking at the log file directly we get the wrong time.
+        # to get the right one we need to restart rsyslog
+        # https://serverfault.com/questions/506340/timzone-incorrect-for-log-files-only
+        "systemctl restart rsyslog",
+        "systemct enable wg-quick@wg0",
+        "systemctl start wg-quick@wg0",
+      ],
+      packages = [
+        "wireguard-tools"
+      ]
+      write_files = [
+        {
+          path = "/etc/wireguard/wg0.conf"
+          content = templatefile("${path.root}/templates/wg0.conf.tftpl", {
+            endpoint    = var.wg_endpoint
+            private_key = var.wg_private_key
+            address     = var.wg_address
+            port        = var.wg_port
+          })
+        }
+      ]
+    })
+  }
+}
+
+
 resource "hcloud_server" "server" {
   name        = "main"
   server_type = "cx22"
@@ -40,8 +75,11 @@ resource "hcloud_server" "server" {
     alias_ips  = []
   }
 
+  user_data = data.template_cloudinit_config.cloudinit.rendered
+
   depends_on = [
-    hcloud_network_subnet.lan-subnet
+    hcloud_network_subnet.lan-subnet,
+    hcloud_primary_ip.main
   ]
 }
 
