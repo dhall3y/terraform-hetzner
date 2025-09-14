@@ -13,7 +13,7 @@ resource "hcloud_network_subnet" "lan-subnet" {
 resource "hcloud_primary_ip" "main" {
   name          = "primary-ip"
   datacenter    = "nbg1-dc3"
-  type          = "ipv6"
+  type          = "ipv4"
   assignee_type = "server"
   auto_delete   = true
 }
@@ -29,9 +29,9 @@ resource "hcloud_server" "server" {
   image       = "rocky-10"
   location    = "nbg1"
   public_net {
-    ipv4_enabled = false
+    ipv4_enabled = true
+    ipv4         = hcloud_primary_ip.main.id
     ipv6_enabled = true
-    ipv6         = hcloud_primary_ip.main.id
   }
 
   ssh_keys = [hcloud_ssh_key.main-27042025.id]
@@ -46,5 +46,5 @@ resource "hcloud_server" "server" {
 }
 
 output "compute_ip" {
-  value = hcloud_server.server.ipv6_address
+  value = hcloud_server.server.ipv4_address
 }
