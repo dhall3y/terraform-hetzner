@@ -45,6 +45,24 @@ resource "hcloud_server" "server" {
   ]
 }
 
+resource "hcloud_firewall" "firewall" {
+  name = "main firewall"
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "22"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+}
+
+resource "hcloud_firewall_attachment" "fw_ref" {
+  firewall_id = hcloud_firewall.firewall.id
+  server_ids  = [hcloud_server.server.id]
+}
+
 output "compute_ip" {
   value = hcloud_server.server.ipv4_address
 }
