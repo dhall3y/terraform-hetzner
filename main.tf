@@ -10,14 +10,6 @@ resource "hcloud_network_subnet" "lan-subnet" {
   network_zone = "eu-central"
 }
 
-resource "hcloud_primary_ip" "main" {
-  name          = "primary-ip"
-  datacenter    = "nbg1-dc3"
-  type          = "ipv4"
-  assignee_type = "server"
-  auto_delete   = true
-}
-
 resource "hcloud_ssh_key" "main-27042025" {
   name       = "main"
   public_key = file("~/.ssh/main-27042025.pub")
@@ -65,7 +57,6 @@ resource "hcloud_server" "server" {
   location    = "nbg1"
   public_net {
     ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.main.id
     ipv6_enabled = true
   }
 
@@ -79,7 +70,6 @@ resource "hcloud_server" "server" {
 
   depends_on = [
     hcloud_network_subnet.lan-subnet,
-    hcloud_primary_ip.main
   ]
 }
 
