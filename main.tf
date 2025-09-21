@@ -28,7 +28,7 @@ data "template_cloudinit_config" "cloudinit" {
         # to get the right one we need to restart rsyslog
         # https://serverfault.com/questions/506340/timzone-incorrect-for-log-files-only
         "systemctl restart rsyslog",
-        "systemct enable wg-quick@wg0",
+        "systemctl enable wg-quick@wg0",
         "systemctl start wg-quick@wg0",
       ],
       packages = [
