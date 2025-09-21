@@ -15,6 +15,10 @@ resource "hcloud_ssh_key" "main-27042025" {
   public_key = file("~/.ssh/main-27042025.pub")
 }
 
+locals {
+  syncthing_home = "/var/lib/syncthing/"
+}
+
 # https://cloudinit.readthedocs.io/en/latest/reference/examples_library.html
 data "template_cloudinit_config" "cloudinit" {
   gzip          = true
@@ -30,10 +34,30 @@ data "template_cloudinit_config" "cloudinit" {
         "systemctl restart rsyslog",
         "systemctl enable wg-quick@wg0",
         "systemctl start wg-quick@wg0",
+
+        # Syncthing part
+        "curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | grep browser_download_url | grep linux-amd64 | cut -d '\"' -f 4 | wget -qi -",
+        "tar -xvf syncthing*.tar.gz",
+        "mv syncthing*/syncthing /usr/bin",
+
+        "mkdir -p ${local.syncthing_home}",
+        "chmod 0776 ${local.syncthing_home}",
+        "chown root:syncthing ${local.syncthing_home}",
+
+        "systemctl enable syncthing",
+        "systemctl start syncthing",
       ],
       timezone = "Europe/Paris",
       packages = [
-        "wireguard-tools"
+        "wireguard-tools",
+        "tar"
+      ]
+      users = [
+        "default",
+        {
+          name   = "syncthing"
+          system = true
+        }
       ]
       write_files = [
         {
@@ -44,8 +68,30 @@ data "template_cloudinit_config" "cloudinit" {
             address     = var.wg_address
             port        = var.wg_port
           })
-        }
-      ]
+        },
+        {
+          path    = "/etc/systemd/system/syncthing.service",
+          content = <<-EOF
+            [Unit]
+            Description=Syncthing - File Synchronization
+            After=network.target
+
+            [Service]
+            User=syncthing
+            ExecStart=/usr/bin/syncthing --no-browser --no-restart --home=${local.syncthing_home}
+            Restart=on-failure
+            RestartSec=5
+
+            ProtectSystem=full
+            PrivateTmp=true
+            SystemCallArchitectures=native
+            MemoryDenyWriteExecute=true
+            NoNewPrivileges=true
+
+            [Install]
+            WantedBy=multi-user.target
+          EOF
+      }]
     })
   }
 }
