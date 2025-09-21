@@ -31,6 +31,7 @@ data "template_cloudinit_config" "cloudinit" {
         "systemctl enable wg-quick@wg0",
         "systemctl start wg-quick@wg0",
       ],
+      timezone = "Europe/Paris",
       packages = [
         "wireguard-tools"
       ]
