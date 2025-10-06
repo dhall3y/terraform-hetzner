@@ -39,6 +39,7 @@ data "template_cloudinit_config" "cloudinit" {
         "curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | grep browser_download_url | grep linux-amd64 | cut -d '\"' -f 4 | wget -qi -",
         "tar -xvf syncthing*.tar.gz",
         "mv syncthing*/syncthing /usr/bin",
+        "rm -rf syncthing*.tar.gz syncthing*/",
 
         "mkdir -p ${local.syncthing_home}",
         "chmod 0776 ${local.syncthing_home}",
