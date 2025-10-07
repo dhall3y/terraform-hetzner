@@ -16,7 +16,7 @@ resource "hcloud_ssh_key" "main-27042025" {
 }
 
 locals {
-  syncthing_home = "/var/lib/syncthing/"
+  syncthing_home = "/var/lib/syncthing"
 }
 
 # https://cloudinit.readthedocs.io/en/latest/reference/examples_library.html
@@ -47,6 +47,14 @@ data "template_cloudinit_config" "cloudinit" {
 
         "systemctl enable syncthing",
         "systemctl start syncthing",
+
+        "until curl -s http://127.0.0.1:8384/rest/system/ping > /dev/null 2>&1; do echo 'waiting for syncthing...'; sleep 2; done",
+        "syncthing cli --home=${local.syncthing_home} config options global-ann-enabled set false",
+        "syncthing cli --home=${local.syncthing_home} config options relays-enabled set false",
+        "syncthing cli --home=${local.syncthing_home} config options natenabled set false",
+        "sudo syncthing cli --home=${local.syncthing_home} config devices add --device-id ${var.peer_device_id} --name ${var.peer_name} --addresses 'tcp://${var.peer_ip}:${var.peer_port}'",
+        "sudo syncthing cli --home=${local.syncthing_home} config folders add --id ${var.peer_folder_id} --label ${var.peer_folder_label} --path ${local.syncthing_home}/${var.peer_folder_id}",
+        "sudo syncthing cli --home=${local.syncthing_home} config folders ${var.peer_folder_id} devices add --device-id ${var.peer_device_id}",
       ],
       timezone = "Europe/Paris",
       packages = [
