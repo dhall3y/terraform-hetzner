@@ -132,10 +132,51 @@ resource "hcloud_server" "server" {
 resource "hcloud_firewall" "firewall" {
   name = "main firewall"
   rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "22"
+    description = "SSH"
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "22"
     source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+  rule {
+    description = "https for package updates, ca certificates, etc"
+    direction   = "out"
+    protocol    = "tcp"
+    port        = "443"
+    destination_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+  rule {
+    description = "time servers"
+    direction   = "out"
+    protocol    = "udp"
+    port        = "123"
+    destination_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+  rule {
+    description = "DNS"
+    direction   = "out"
+    protocol    = "udp"
+    port        = "53"
+    destination_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+  rule {
+    description = "Wireguard"
+    direction   = "out"
+    protocol    = "udp"
+    port        = "41820"
+    destination_ips = [
       "0.0.0.0/0",
       "::/0"
     ]
