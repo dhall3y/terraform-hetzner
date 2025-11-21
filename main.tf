@@ -108,7 +108,7 @@ data "template_cloudinit_config" "cloudinit" {
 
 resource "hcloud_server" "server" {
   name        = "lain"
-  server_type = "cx22"
+  server_type = "cx23"
   image       = "rocky-10"
   location    = "nbg1"
   public_net {
